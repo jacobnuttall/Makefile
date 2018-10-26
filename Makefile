@@ -1,23 +1,39 @@
 #----------------------	-----C++ Makefile--------------------------------------#
 # 
-# Features: Handles a multi-directory structure for projects and component-
-# specific recompilation for dependencies.
+# Features: Handles a multi-directory structure for projects and automatic
+# component-specific compilation for dependencies. It also uses an iterated 
+# version of recursive make to build components in order.
 # 
 # Type make to compile, make clean to remove executable and object files,
 # and make cleaner to remove TDIR, SDIR, and ODIR. Using this make file in an
-# empty directory will set up the folders necessary.
-# 
+# empty directory will initialize the folder hierarchy.
 # 
 # Layout:
 #	.		: Put this Makefile in the top level of the project.
-#	./src	: Directory for source files (Todo: subdirectories for clases)
+#	./src	: Directory for source files. Allows for subdirectories.
 #	./dep	: Directory for placing dependency information.
 #	./obj	: Directory for object file storage
 #	./bin	: Directory for where to place the target executable.
 # 
-#--- See http://www.gnu.org/software/make/manual/make.html for more info.------#
-.SECONDEXPANSION:
+#    See http://www.gnu.org/software/make/manual/make.html for more info.      #
 
+####################        CHANGEABLE ITEMS     ###############################
+
+#------------------  Output File and Folder Hierarchy -------------------------#
+
+# Change the name of the compiled program here.
+NAME = qsort
+
+# If desired, change these variables to store files in other locations.
+TDIR := .
+SDIR := ./src
+ODIR := ./.obj
+LDIR := $(ODIR)/.lnk
+DDIR := $(ODIR)/.dep
+
+####################     DON'T CHANGE BELOW HERE     ###########################
+
+#-------------------  Variable Defintions -------------------------------------#
 
 # Flags for the compiler.
 CC = g++
@@ -31,77 +47,65 @@ CPPFLAGS = -g -Wall -std=c++11
 DEPFLAGS = -MT $@ -MM -MP -MF # when using $(DEPFLAGS), put output info after.
 NODEP = clean cleaner
 
-#----- Change the name of the compiled program here. --------------------------#
-NAME = qsort
-
-#-- If desired, change these variables to store files in other locations. -----#
-SDIR := ./src
-LDIR := $(SDIR)/.lnk
-DDIR := ./.dep
-ODIR := ./.obj
-TDIR := .# changed from ./bin -> .
-
-# Grab source files from $(SDIR). Process them for linking.
-$(shell if [ ! -d "$(SDIR)/" ]; then mkdir $(SDIR)/; fi)
-SRC := $(shell find $(SDIR) -print | grep .cpp | sed 's,\(.*/\)\(.*\)\(\.cpp\),\2\1\2\3,')
-
-# Convert the source file names to object file names.
-$(shell if [ ! -d "$(ODIR)/" ]; then mkdir $(ODIR)/; fi)
-OBJS := $(addprefix $(ODIR)/, $(notdir $(patsubst %.cpp, %.o, $(SRC))))
-
-# Prepare these if building, but not if cleaning.
-ifneq ($(MAKECMDGOALS), $(NODEP))
+# This is an escape for spaces.
+sp =\\\ 
 
 # Name and location of final executable.
 $(shell if [ ! -d "$(TDIR)/" ]; then mkdir $(TDIR)/; fi)
 TARGET := $(TDIR)/$(NAME)
 
+# Grab source files from $(SDIR).
+$(shell if [ ! -d "$(SDIR)/" ]; then mkdir $(SDIR)/; fi)
+SRC := $(shell find $(SDIR) -print | grep .cpp | sed 's,.*/\(.*\)\.cpp,\1,')
+
 # Process source file information to set up links.
 $(shell if [ ! -d "$(LDIR)/" ]; then mkdir $(LDIR)/; fi)
-LNKPATH := $(shell find $(SDIR) -print | grep .cpp | sed 's,\./.*/\(.*\)\.cpp,$(LDIR)/\1-dir,')
+LNKPATH := $(shell find $(SDIR) -print | grep .cpp | sed 's,\./.*/\(.*\)\.cpp, $(LDIR)/\1-dir,')
 vpath %.cpp $(LNKPATH)
 
-# Extract the name information from source files.
-LNK := $(notdir $(patsubst %.cpp, %, $(SRC)))
+# Convert the source file names to object file names.
+$(shell if [ ! -d "$(ODIR)/" ]; then mkdir $(ODIR)/; fi)
+OBJS := $(foreach file, $(SRC), $(ODIR)/$(file).o)
 
 # Prepare dependency information.
 $(shell if [ ! -d "$(DDIR)/" ]; then mkdir $(DDIR)/; fi)
-DEPS := $(addprefix $(DDIR)/, $(notdir $(patsubst %.cpp, %.d, $(SRC))))
-endif
+DEPS := $(DDIR)/$(notdir $(patsubst %.o, %.d, $(OBJS)))
 
-# Prevent the execution of certain parts the first time MAKE is called.
-STEPS = FirstStep SecondStep ThirdStep
-TAGS = Tag1 Tag2 Tag3
+
+# Prevent the execution of certain parts each time MAKE is called.
+STEPS = ZerothStep FirstStep SecondStep ThirdStep
+TAGS = Tag0 Tag1 Tag2 Tag3
 ifeq ($(MAKELEVEL), 0)
-STEP = FirstStep
+STEP = ZerothStep
 endif
 ifeq ($(MAKELEVEL), 1)
-STEP = SecondStep
+STEP = FirstStep
 endif
 ifeq ($(MAKELEVEL), 2)
+STEP = SecondStep
+endif
+ifeq ($(MAKELEVEL), 3)
 STEP = ThirdStep
 endif
 
 #-------------------  Rules for Handling compilation --------------------------#
 
-# General rule.
-# First Part of Execution: Get symbolic links to sources.
-# Second Part of Execution: Compile and link source code.
+# General rule. Switches execution based on each step.
 all: $(STEP)
 
 # Compile the program.
-# $@ gets the target, $^ gets a list of all prequisities.
 $(TARGET): $(OBJS)
 	$(CC) $(CPPFLAGS) -o $@ $^
 
-# Create symbolic links to source files to avoid problems with whitespaced-filenames.
-# sed 's,.*$@\./\(.*/\)$@\.cpp.*,\1,') extracts directory information
-$(LNK): % :
+# Create symbolic links to source files.
+$(SRC): % :
 	rm -f $$(echo $(LDIR)/$@-dir)
-	ln -s $$(echo ../../$$(echo $(SRC) | sed 's,.*$@\./\(.*/\)$@\.cpp.*,\1,')) $$(echo $(LDIR)/$@-dir)
+	ln -s ../../$(shell find $(SDIR) -print | grep $*.cpp | \
+		sed 's,.*\./\(.*\)/$*.*,\1,g' | \
+		sed 's, ,$(sp),g') \
+		$(shell echo $(LDIR)/$@-dir)
 
 # Compile object files from the source files. Also retrieves dependency info.
-# Look up Make Automatic Variables for descriptions of each one.
 $(OBJS): $(ODIR)/%.o: %.cpp 
 	$(CC) $(DEPFLAGS) '$(DDIR)/$*.d' '$<'
 	@echo '' >> '$(DDIR)/$*.d'
@@ -110,10 +114,15 @@ $(OBJS): $(ODIR)/%.o: %.cpp
 	
 # This line handles recompilation for dependency changes.
 ifeq ($(STEP), SecondStep)
+ifneq ($(MAKECMDGOALS), $(NODEP))
 -include $(DEPS)
 endif
+endif
 
-FirstStep: Tag1 $(LNK) 
+ZerothStep: Tag0
+	$(MAKE)
+
+FirstStep: Tag1 $(SRC) 
 	$(MAKE)
 	
 SecondStep: Tag2 $(TARGET)
@@ -121,18 +130,26 @@ SecondStep: Tag2 $(TARGET)
 
 ThirdStep: Tag3
 
-#-----------------Rules which dp not make files--------------------------------#
-.PHONY: clean cleaner 
+#-----------------Rules which do not make files--------------------------------#
+
+.PHONY: clean cleaner $(STEPS) $(TAGS)
 
 #-----------------Rules for cleaning up the directory--------------------------#
+
 clean: 
 	rm -f $(TARGET) $(OBJS) $(LNKPATH)
 	
 cleaner:
-	rm -r $(ODIR) $(DDIR) $(LDIR)
+	rm -r $(ODIR)
 	rm -f $(TARGET)
 	
 #-------------------- Progress Information-------------------------------------#
+Tag0:
+	@echo  
+	@echo -----------------------------------------------
+	@echo . \*\*\*\* Preparing $(NAME) For Build \*\*\*\* .
+	@echo -----------------------------------------------
+	@echo  
 
 Tag1:
 	@echo  
@@ -151,7 +168,8 @@ Tag2:
 Tag3:
 	@echo 
 	@echo -----------------------------------------------
-	@echo . \*\*\*\*            FINISHED               \*\*\*\* .
+	@echo . \*\*\*\* FINISHED \*\*\*\* .
 	@echo -----------------------------------------------
 	@echo
+
 #------------------------------------------------------------------------------#
