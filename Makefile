@@ -1,12 +1,16 @@
-#----------------------	-----C++ Makefile--------------------------------------#
+#---------------------------C++ Makefile--------------------------------------#
 # 
 # Features: Handles a multi-directory structure for projects and automatic
 # component-specific compilation for dependencies. It also uses an iterated 
-# version of recursive make to build components in order.
+# version of recursive make to build components in order. In addition, if
+# needed source files are outside of the project directory, they can be drawn from
+# also.
 # 
 # Type make to compile, make clean to remove executable and object files,
-# and make cleaner to remove TDIR, SDIR, and ODIR. Using this make file in an
-# empty directory will initialize the folder hierarchy.
+# and make cleaner to remove TARGET, DDIR, LDIR, and ODIR. Using this make file 
+# in an empty directory will initialize the folder hierarchy.
+# 
+# Todo: Make compatible with .c files.
 # 
 # Layout:
 #	.		: Put this Makefile in the top level of the project.
@@ -25,11 +29,19 @@
 NAME = qsort
 
 # If desired, change these variables to store files in other locations.
-TDIR := .
-SDIR := ./src
-ODIR := ./.obj
-LDIR := $(ODIR)/.lnk
-DDIR := $(ODIR)/.dep
+TDIR = .
+SDIR = ./src
+ODIR = ./.obj
+LDIR = $(ODIR)/.lnk
+DDIR = $(ODIR)/.dep
+
+sp =\ 
+
+# Use this variable to locate external source files.
+# Make sure that every file pulled into the project is unique. If the source file has
+# spaces in the path, use $(sp) or type '\ ' to escape.
+# Note that recursive searching of directories is not applied to EXTDIRS.
+EXTDIRS = # ex. ./myproject/code/ etc
 
 ####################     DON'T CHANGE BELOW HERE     ###########################
 
@@ -54,13 +66,15 @@ sp =\\\
 $(shell if [ ! -d "$(TDIR)/" ]; then mkdir $(TDIR)/; fi)
 TARGET := $(TDIR)/$(NAME)
 
-# Grab source files from $(SDIR).
+# Grab source files from $(SDIR). Look through ./src and directories named in $(EXTDIRS)
 $(shell if [ ! -d "$(SDIR)/" ]; then mkdir $(SDIR)/; fi)
-SRC := $(shell find $(SDIR) -print | grep .cpp | sed 's,.*/\(.*\)\.cpp,\1,')
+SDIR := $(shell find $(SDIR) -type d -print | sed 's, ,\ ,' | sed 's,\(.*\),"\1",')
+SDIR += $(EXTDIRS)
+SRC := $(shell find $(SDIR) -maxdepth 1 -name '*.cpp' -print | sed 's,.*/\(.*\)\.cpp,\1,')
 
 # Process source file information to set up links.
 $(shell if [ ! -d "$(LDIR)/" ]; then mkdir $(LDIR)/; fi)
-LNKPATH := $(shell find $(SDIR) -print | grep .cpp | sed 's,\./.*/\(.*\)\.cpp, $(LDIR)/\1-dir,')
+LNKPATH := $(shell find $(SDIR) -maxdepth 1 -name '*.cpp' -print | sed 's,\./.*/\(.*\)\.cpp, $(LDIR)/\1-dir,')
 vpath %.cpp $(LNKPATH)
 
 # Convert the source file names to object file names.
@@ -70,7 +84,6 @@ OBJS := $(foreach file, $(SRC), $(ODIR)/$(file).o)
 # Prepare dependency information.
 $(shell if [ ! -d "$(DDIR)/" ]; then mkdir $(DDIR)/; fi)
 DEPS := $(DDIR)/$(notdir $(patsubst %.o, %.d, $(OBJS)))
-
 
 # Prevent the execution of certain parts each time MAKE is called.
 STEPS = ZerothStep FirstStep SecondStep ThirdStep
@@ -100,7 +113,7 @@ $(TARGET): $(OBJS)
 # Create symbolic links to source files.
 $(SRC): % :
 	rm -f $$(echo $(LDIR)/$@-dir)
-	ln -s ../../$(shell find $(SDIR) -print | grep $*.cpp | \
+	ln -s ../../$(shell find $(SDIR) -maxdepth 1 -name '$*.cpp' -print | \
 		sed 's,.*\./\(.*\)/$*.*,\1,g' | \
 		sed 's, ,$(sp),g') \
 		$(shell echo $(LDIR)/$@-dir)
@@ -120,13 +133,13 @@ endif
 endif
 
 ZerothStep: Tag0
-	$(MAKE)
+	($(MAKE))
 
 FirstStep: Tag1 $(SRC) 
-	$(MAKE)
+	($(MAKE))
 	
 SecondStep: Tag2 $(TARGET)
-	$(MAKE)
+	($(MAKE))
 
 ThirdStep: Tag3
 
@@ -144,19 +157,21 @@ cleaner:
 	rm -f $(TARGET)
 	
 #-------------------- Progress Information-------------------------------------#
+
 Tag0:
 	@echo  
 	@echo -----------------------------------------------
 	@echo . \*\*\*\* Preparing $(NAME) For Build \*\*\*\* .
 	@echo -----------------------------------------------
 	@echo  
+	@echo Source directories: '$(SDIR)'
 
 Tag1:
 	@echo  
 	@echo -----------------------------------------------
 	@echo . \*\*\*\* Getting Symbolic Links to Sources \*\*\*\* .
 	@echo -----------------------------------------------
-	@echo  
+	@echo 
 
 Tag2:
 	@echo 
