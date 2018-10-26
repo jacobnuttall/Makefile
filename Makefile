@@ -143,19 +143,6 @@ SecondStep: Tag2 $(TARGET)
 
 ThirdStep: Tag3
 
-#-----------------Rules which do not make files--------------------------------#
-
-.PHONY: clean cleaner $(STEPS) $(TAGS)
-
-#-----------------Rules for cleaning up the directory--------------------------#
-
-clean: 
-	rm -f $(TARGET) $(OBJS) $(LNKPATH)
-	
-cleaner:
-	rm -r $(ODIR)
-	rm -f $(TARGET)
-	
 #-------------------- Progress Information-------------------------------------#
 
 Tag0:
@@ -187,4 +174,17 @@ Tag3:
 	@echo -----------------------------------------------
 	@echo
 
+#-----------------Rules which do not make files--------------------------------#
+
+.PHONY: clean cleaner $(STEPS) $(TAGS)
+
+#-----------------Rules for cleaning up the directory--------------------------#
+
+clean: 
+	rm -f $(TARGET) $(OBJS) $(LNKPATH)
+	
+cleaner:
+	rm -r $(ODIR)
+	rm -f $(TARGET)
+	
 #------------------------------------------------------------------------------#
