@@ -55,7 +55,6 @@ EXTDIRS = # ex. ./myproject/code/ ./other\ /project/code
 CC = g++
 CPPFLAGS = -g -Wall -std=c++11
 DEPFLAGS = -MT $@ -MM -MP -MF # when using $(DEPFLAGS), put output info after.
-NODEP = clean cleaner
 
 sp =\\\ 
 
@@ -130,9 +129,7 @@ $(OBJS): $(ODIR)/%.o: %.cpp
 	
 # This line handles recompilation for dependency changes.
 ifeq ($(STEP), ThirdStep)
-ifneq ($(MAKECMDGOALS), $(NODEP))
 -include $(DEPS)
-endif
 endif
 
 ZerothStep: Tag0
