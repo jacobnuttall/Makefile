@@ -132,7 +132,6 @@ ifeq ($(STEP), ThirdStep)
 -include $(DEPS)
 endif
 
-
 #---------------------- Compilation Sequence ----------------------------------#
 
 # Show source directories
