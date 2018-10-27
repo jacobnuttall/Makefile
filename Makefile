@@ -84,7 +84,7 @@ vpath %.cpp $(LNKPATH)
 $(shell if [ ! -d "$(DDIR)/" ]; then mkdir $(DDIR)/; fi)
 DEPS := $(foreach file, $(SRC), $(DDIR)/$(file).d)
 
-# Prevent the execution of certain parts each time MAKE is called.
+# Prepare switches to handle the execution of certain parts each time MAKE is called.
 STEPS = ZerothStep FirstStep SecondStep ThirdStep NullStep
 TAGS = Tag0 Tag1 Tag2 Tag3 TagNull
 
