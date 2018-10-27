@@ -19,7 +19,7 @@
 #	./.obj/.dep	: Directory for placing dependency information.
 #	./.obj/.lnk	: Directory for placing links to source code.
 #	./src		: Directory for source files. Subdirectories of ./src
-#			  are automatically drawn in to search for source files
+#			  are automatically drawn in via to search for source files
 #                         through use of the find tool.
 # 
 #    See http://www.gnu.org/software/make/manual/make.html for more info.      #
@@ -32,7 +32,7 @@
 NAME = qsort
 
 # If desired, change these variables to store files in other locations.
-TDIR = ./bin
+TDIR = .
 ODIR = ./.obj
 LDIR = $(ODIR)/.lnk
 DDIR = $(ODIR)/.dep
@@ -128,7 +128,7 @@ $(OBJS): $(ODIR)/%.o: %.cpp
 	$(CC) -c $(CPPFLAGS) '$(LDIR)/$*-dir/$(<F)' -o '$@'
 	
 # This line handles recompilation for dependency changes.
-ifeq ($(STEP), ThirdStep)
+ifeq ($(STEP), SecondStep)
 -include $(DEPS)
 endif
 
@@ -142,11 +142,10 @@ ZerothStep: Tag0
 FirstStep: Tag1 $(SRC) 
 	($(MAKE))
 
-# Check for updates to source code.
+# Check for updates to source code and dependencies.
 SecondStep: Tag2 $(TARGET)
 	($(MAKE))
 
-# Check for updates to dependencies of source code.
 ThirdStep: Tag3
 
 # No source files found.
