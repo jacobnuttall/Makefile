@@ -19,7 +19,7 @@
 #	./.obj/.dep	: Directory for placing dependency information.
 #	./.obj/.lnk	: Directory for placing links to source code.
 #	./src		: Directory for source files. Subdirectories of ./src
-#			  are automatically drawn in via to search for source files
+#			  are automatically drawn in to search for source files
 #                         through use of the find tool.
 # 
 #    See http://www.gnu.org/software/make/manual/make.html for more info.      #
