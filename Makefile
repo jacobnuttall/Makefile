@@ -31,10 +31,10 @@ NAME = qsort
 
 # If desired, change these variables to store files in other locations.
 TDIR = ./bin
-SDIR = ./src
 ODIR = ./.obj
-LDIR = $(ODIR)/.lnk
 DDIR = $(ODIR)/.dep
+LDIR = $(ODIR)/.lnk
+SDIR = ./src
 
 sp =\ 
 
