@@ -58,7 +58,7 @@ NODEP = clean cleaner
 sp =\\\ 
 
 # SEDIR is Source + External directories
-SEDIR=
+SEDIR =
 
 # Name and location of final executable.
 $(shell if [ ! -d "$(TDIR)/" ]; then mkdir $(TDIR)/; fi)
