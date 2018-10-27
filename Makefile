@@ -16,8 +16,8 @@
 #	.			: Put this Makefile in the top level of the project
 #	./bin		: Directory for where to place the target executable.
 #	./obj		: Directory for object file storage.
-#	./obj/dep	: Directory for placing dependency information.
-#	./obj/lnk	: Directory for placing links to source code.
+#	./.obj/.dep	: Directory for placing dependency information.
+#	./.obj/.lnk	: Directory for placing links to source code.
 #	./src		: Directory for source files. Allows for subdirectories.
 # 
 #    See http://www.gnu.org/software/make/manual/make.html for more info.      #
