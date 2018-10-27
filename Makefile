@@ -13,7 +13,7 @@
 # Todo: Make compatible with .c files.
 # 
 # Layout:
-#	.			: Put this Makefile in the top level of the project
+#	.		: Put this Makefile in the top level of the project
 #	./bin		: Directory for where to place the target executable.
 #	./obj		: Directory for object file storage.
 #	./.obj/.dep	: Directory for placing dependency information.
