@@ -34,8 +34,8 @@ NAME = qsort
 # If desired, change these variables to store files in other locations.
 TDIR = ./bin
 ODIR = ./.obj
-DDIR = $(ODIR)/.dep
 LDIR = $(ODIR)/.lnk
+DDIR = $(ODIR)/.dep
 SDIR = ./src
 
 sp =\ 
@@ -83,7 +83,7 @@ vpath %.cpp $(LNKPATH)
 
 # Prepare dependency information.
 $(shell if [ ! -d "$(DDIR)/" ]; then mkdir $(DDIR)/; fi)
-DEPS := $(DDIR)/$(notdir $(patsubst %.o, %.d, $(OBJS)))
+DEPS := $(foreach file, $(SRC), $(DDIR)/$(file).d)
 
 # Prevent the execution of certain parts each time MAKE is called.
 STEPS = ZerothStep FirstStep SecondStep ThirdStep NullStep
