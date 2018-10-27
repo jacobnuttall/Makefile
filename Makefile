@@ -2,9 +2,9 @@
 # 
 # Features: Handles a multi-directory structure for projects and automatic
 # component-specific compilation for dependencies. It also uses an iterated 
-# version of recursive make to build components in order. In addition, if
-# needed source files are outside of the project directory, they can be drawn from
-# also.
+# style of recursive make to build components in order. In addition, if
+# needed source files are outside of the project directory, there are be options
+# to draw them in also.
 # 
 # Type make to compile, make clean to remove executable and object files,
 # and make cleaner to remove TARGET, DDIR, LDIR, and ODIR. Using this make file 
@@ -13,11 +13,12 @@
 # Todo: Make compatible with .c files.
 # 
 # Layout:
-#	.		: Put this Makefile in the top level of the project.
-#	./src	: Directory for source files. Allows for subdirectories.
-#	./dep	: Directory for placing dependency information.
-#	./obj	: Directory for object file storage
-#	./bin	: Directory for where to place the target executable.
+#	.			: Put this Makefile in the top level of the project
+#	./bin		: Directory for where to place the target executable.
+#	./obj		: Directory for object file storage.
+#	./obj/dep	: Directory for placing dependency information.
+#	./obj/lnk	: Directory for placing links to source code.
+#	./src		: Directory for source files. Allows for subdirectories.
 # 
 #    See http://www.gnu.org/software/make/manual/make.html for more info.      #
 
@@ -29,7 +30,7 @@
 NAME = qsort
 
 # If desired, change these variables to store files in other locations.
-TDIR = .
+TDIR = ./bin
 SDIR = ./src
 ODIR = ./.obj
 LDIR = $(ODIR)/.lnk
@@ -39,9 +40,10 @@ sp =\
 
 # Use this variable to locate external source files.
 # Make sure that every file pulled into the project is unique. If the source file has
-# spaces in the path, use $(sp) or type '\ ' to escape.
+# spaces in the path, replace them with $(sp) or type '\ '.
 # Note that recursive searching of directories is not applied to EXTDIRS.
-EXTDIRS = # ex. ./myproject/code/ etc
+
+EXTDIRS = # ex. ./myproject/code/ ./other\ /project/code
 
 ####################     DON'T CHANGE BELOW HERE     ###########################
 
@@ -50,17 +52,13 @@ EXTDIRS = # ex. ./myproject/code/ etc
 # Flags for the compiler.
 CC = g++
 CPPFLAGS = -g -Wall -std=c++11
-
-# -M: Output rule suitable for make (MM don't include system deps)
-# -MT: Set target to specified string
-# -MP: Add phony targets for each dependency other than main file
-# -MF: Output dependencies to specific location
-
 DEPFLAGS = -MT $@ -MM -MP -MF # when using $(DEPFLAGS), put output info after.
 NODEP = clean cleaner
 
-# This is an escape for spaces.
 sp =\\\ 
+
+# SEDIR is Source + External directories
+SEDIR=
 
 # Name and location of final executable.
 $(shell if [ ! -d "$(TDIR)/" ]; then mkdir $(TDIR)/; fi)
@@ -68,26 +66,27 @@ TARGET := $(TDIR)/$(NAME)
 
 # Grab source files from $(SDIR). Look through ./src and directories named in $(EXTDIRS)
 $(shell if [ ! -d "$(SDIR)/" ]; then mkdir $(SDIR)/; fi)
-SDIR := $(shell find $(SDIR) -type d -print | sed 's, ,\ ,' | sed 's,\(.*\),"\1",')
-SDIR += $(EXTDIRS)
-SRC := $(shell find $(SDIR) -maxdepth 1 -name '*.cpp' -print | sed 's,.*/\(.*\)\.cpp,\1,')
-
-# Process source file information to set up links.
-$(shell if [ ! -d "$(LDIR)/" ]; then mkdir $(LDIR)/; fi)
-LNKPATH := $(shell find $(SDIR) -maxdepth 1 -name '*.cpp' -print | sed 's,\./.*/\(.*\)\.cpp, $(LDIR)/\1-dir,')
-vpath %.cpp $(LNKPATH)
+SEDIR := $(shell find $(SDIR) -type d -print | sed 's, ,\ ,' | sed 's,\(.*\),"\1",')
+SEDIR += $(EXTDIRS)
+SRC := $(shell find $(SEDIR) -maxdepth 1 -name '*.cpp' -print | sed 's,.*/\(.*\)\.cpp,\1,')
 
 # Convert the source file names to object file names.
 $(shell if [ ! -d "$(ODIR)/" ]; then mkdir $(ODIR)/; fi)
 OBJS := $(foreach file, $(SRC), $(ODIR)/$(file).o)
+
+# Process source file information to set up links directories.
+$(shell if [ ! -d "$(LDIR)/" ]; then mkdir $(LDIR)/; fi)
+LNKPATH := $(foreach file, $(SRC), $(LDIR)/$(file)-dir)
+vpath %.cpp $(LNKPATH)
 
 # Prepare dependency information.
 $(shell if [ ! -d "$(DDIR)/" ]; then mkdir $(DDIR)/; fi)
 DEPS := $(DDIR)/$(notdir $(patsubst %.o, %.d, $(OBJS)))
 
 # Prevent the execution of certain parts each time MAKE is called.
-STEPS = ZerothStep FirstStep SecondStep ThirdStep
-TAGS = Tag0 Tag1 Tag2 Tag3
+STEPS = ZerothStep FirstStep SecondStep ThirdStep NullStep
+TAGS = Tag0 Tag1 Tag2 Tag3 TagNull
+
 ifeq ($(MAKELEVEL), 0)
 STEP = ZerothStep
 endif
@@ -99,6 +98,9 @@ STEP = SecondStep
 endif
 ifeq ($(MAKELEVEL), 3)
 STEP = ThirdStep
+endif
+ifeq ($(SRC),)
+STEP = NullStep
 endif
 
 #-------------------  Rules for Handling compilation --------------------------#
@@ -113,17 +115,17 @@ $(TARGET): $(OBJS)
 # Create symbolic links to source files.
 $(SRC): % :
 	rm -f $$(echo $(LDIR)/$@-dir)
-	ln -s ../../$(shell find $(SDIR) -maxdepth 1 -name '$*.cpp' -print | \
+	ln -s ../../$(shell find $(SEDIR) -maxdepth 1 -name '$*.cpp' -print | \
 		sed 's,.*\./\(.*\)/$*.*,\1,g' | \
 		sed 's, ,$(sp),g') \
 		$(shell echo $(LDIR)/$@-dir)
 
 # Compile object files from the source files. Also retrieves dependency info.
 $(OBJS): $(ODIR)/%.o: %.cpp 
-	$(CC) $(DEPFLAGS) '$(DDIR)/$*.d' '$<'
+	$(CC) $(DEPFLAGS) '$(DDIR)/$*.d' '$(LDIR)/$*-dir/$(<F)'
 	@echo '' >> '$(DDIR)/$*.d'
 	@echo '$<:' >> '$(DDIR)/$*.d'
-	$(CC) -c $(CPPFLAGS) '$<' -o '$@'
+	$(CC) -c $(CPPFLAGS) '$(LDIR)/$*-dir/$(<F)' -o '$@'
 	
 # This line handles recompilation for dependency changes.
 ifeq ($(STEP), SecondStep)
@@ -143,6 +145,8 @@ SecondStep: Tag2 $(TARGET)
 
 ThirdStep: Tag3
 
+NullStep: TagNull
+
 #-------------------- Progress Information-------------------------------------#
 
 Tag0:
@@ -151,7 +155,7 @@ Tag0:
 	@echo . \*\*\*\* Preparing $(NAME) For Build \*\*\*\* .
 	@echo -----------------------------------------------
 	@echo  
-	@echo Source directories: '$(SDIR)'
+	@echo Source directories: '$(SEDIR)'
 
 Tag1:
 	@echo  
@@ -173,6 +177,12 @@ Tag3:
 	@echo . \*\*\*\* FINISHED \*\*\*\* .
 	@echo -----------------------------------------------
 	@echo
+	
+TagNull:
+	@echo No source files found! \
+	If you are not starting a new project, \
+	did you place your source files in $(SDIR) \
+	or put their path in the variable EXTDIRS?
 
 #-----------------Rules which do not make files--------------------------------#
 
