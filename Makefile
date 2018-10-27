@@ -124,7 +124,7 @@ $(SRC): % :
 $(OBJS): $(ODIR)/%.o: %.cpp 
 	$(CC) $(DEPFLAGS) '$(DDIR)/$*.d' '$(LDIR)/$*-dir/$(<F)'
 	@echo '' >> '$(DDIR)/$*.d'
-	@echo '$<:' >> '$(DDIR)/$*.d'
+	@echo '$(LDIR)/$*-dir/$(<F):' >> '$(DDIR)/$*.d'
 	$(CC) -c $(CPPFLAGS) '$(LDIR)/$*-dir/$(<F)' -o '$@'
 	
 # This line handles recompilation for dependency changes.
