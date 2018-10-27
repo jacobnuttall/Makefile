@@ -114,11 +114,10 @@ $(TARGET): $(OBJS)
 
 # Create symbolic links to source files.
 $(SRC): % :
-	rm -f $$(echo $(LDIR)/$@-dir)
+	rm -f $(LDIR)/$@-dir
 	ln -s ../../$(shell find $(SEDIR) -maxdepth 1 -name '$*.cpp' -print | \
-		sed 's,.*\./\(.*\)/$*.*,\1,g' | \
-		sed 's, ,$(sp),g') \
-		$(shell echo $(LDIR)/$@-dir)
+	sed 's,.*\./\(.*\)/$*.*,\1,g' | \
+	sed 's, ,$(sp),g') $(LDIR)/$@-dir
 
 # Compile object files from the source files. Also retrieves dependency info.
 $(OBJS): $(ODIR)/%.o: %.cpp 
