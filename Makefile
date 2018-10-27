@@ -38,9 +38,9 @@ DDIR = $(ODIR)/.dep
 
 sp =\ 
 
-# Use this variable to locate external source files.
-# Make sure that every file pulled into the project is unique. If the source file has
-# spaces in the path, replace them with $(sp) or type '\ '.
+# Use EXTDIRS to locate external directories with required source files.
+# Make sure that the name of every file pulled into the project is unique. 
+# If the source file has spaces in the path, replace them with $(sp) or type '\ '.
 # Note that recursive searching of directories is not applied to EXTDIRS.
 
 EXTDIRS = # ex. ./myproject/code/ ./other\ /project/code
