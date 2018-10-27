@@ -18,7 +18,9 @@
 #	./obj		: Directory for object file storage.
 #	./.obj/.dep	: Directory for placing dependency information.
 #	./.obj/.lnk	: Directory for placing links to source code.
-#	./src		: Directory for source files. Allows for subdirectories.
+#	./src		: Directory for source files. Subdirectories of ./src
+#			  are automatically drawn in via to search for source files
+#                         through use of the find tool.
 # 
 #    See http://www.gnu.org/software/make/manual/make.html for more info.      #
 
@@ -41,7 +43,7 @@ sp =\
 # Use EXTDIRS to locate external directories with required source files.
 # Make sure that the name of every file pulled into the project is unique. 
 # If the source file has spaces in the path, replace them with $(sp) or type '\ '.
-# Note that recursive searching of directories is not applied to EXTDIRS.
+# Note that subdirectories of paths in EXTDIRS are not searched for.
 
 EXTDIRS = # ex. ./myproject/code/ ./other\ /project/code
 
@@ -115,9 +117,9 @@ $(TARGET): $(OBJS)
 # Create symbolic links to source files.
 $(SRC): % :
 	rm -f $(LDIR)/$@-dir
-	ln -s ../../$(shell find $(SEDIR) -maxdepth 1 -name '$*.cpp' -print | \
+	ln -s "../../$(shell find $(SEDIR) -maxdepth 1 -name '$*.cpp' -print | \
 	sed 's,.*\./\(.*\)/$*.*,\1,g' | \
-	sed 's, ,$(sp),g') $(LDIR)/$@-dir
+	sed 's, ,$(sp),g')" '$(LDIR)/$@-dir'
 
 # Compile object files from the source files. Also retrieves dependency info.
 $(OBJS): $(ODIR)/%.o: %.cpp 
@@ -127,7 +129,7 @@ $(OBJS): $(ODIR)/%.o: %.cpp
 	$(CC) -c $(CPPFLAGS) '$(LDIR)/$*-dir/$(<F)' -o '$@'
 	
 # This line handles recompilation for dependency changes.
-ifeq ($(STEP), SecondStep)
+ifeq ($(STEP), ThirdStep)
 ifneq ($(MAKECMDGOALS), $(NODEP))
 -include $(DEPS)
 endif
