@@ -132,17 +132,25 @@ ifeq ($(STEP), ThirdStep)
 -include $(DEPS)
 endif
 
-ZerothStep: Tag0
+
+#---------------------- Compilation Sequence ----------------------------------#
+
+# Show source directories
+ZerothStep: Tag0 
 	($(MAKE))
 
+# Make symbolic links
 FirstStep: Tag1 $(SRC) 
 	($(MAKE))
-	
+
+# Check for updates to source code.
 SecondStep: Tag2 $(TARGET)
 	($(MAKE))
 
+# Check for updates to dependencies of source code.
 ThirdStep: Tag3
 
+# No source files found.
 NullStep: TagNull
 
 #-------------------- Progress Information-------------------------------------#
