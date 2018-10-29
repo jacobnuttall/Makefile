@@ -29,7 +29,7 @@
 #------------------  Output File and Folder Hierarchy -------------------------#
 
 # Change the name of the compiled program here.
-NAME = qsort
+NAME = myprogram
 
 # If desired, change these variables to store files in other locations.
 TDIR = ./bin
