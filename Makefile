@@ -38,7 +38,7 @@ LDIR = $(ODIR)/.lnk
 DDIR = $(ODIR)/.dep
 SDIR = ./src
 
-sp =\ 
+s :=\ 
 
 # Use EXTDIRS to locate external directories with required source files.
 # Make sure that the name of every file pulled into the project is unique. 
@@ -56,7 +56,7 @@ CC = g++
 CPPFLAGS = -g -Wall -std=c++11
 DEPFLAGS = -MT $@ -MM -MP -MF # when using $(DEPFLAGS), put output info after.
 
-sp =\\\ 
+sp :=\\
 
 # SEDIR is Source + External directories
 SEDIR =
@@ -66,6 +66,7 @@ $(shell if [ ! -d "$(TDIR)/" ]; then mkdir $(TDIR)/; fi)
 TARGET := $(TDIR)/$(NAME)
 
 # Grab source files from $(SDIR). Look through ./src and directories named in $(EXTDIRS)
+INIT := $(shell ! test -d $(SDIR) && echo init)
 $(shell if [ ! -d "$(SDIR)/" ]; then mkdir $(SDIR)/; fi)
 SEDIR := $(shell find $(SDIR) -type d -print | sed 's, ,\ ,' | sed 's,\(.*\),"\1",')
 SEDIR += $(EXTDIRS)
@@ -85,8 +86,8 @@ $(shell if [ ! -d "$(DDIR)/" ]; then mkdir $(DDIR)/; fi)
 DEPS := $(foreach file, $(SRC), $(DDIR)/$(file).d)
 
 # Prepare switches to handle the execution of certain parts each time MAKE is called.
-STEPS = ZerothStep FirstStep SecondStep ThirdStep NullStep
-TAGS = Tag0 Tag1 Tag2 Tag3 TagNull
+STEPS = ZerothStep FirstStep SecondStep ThirdStep NullStep InitStep
+TAGS = Tag0 Tag1 Tag2 Tag3 TagNull TagInit
 
 ifeq ($(MAKELEVEL), 0)
 STEP = ZerothStep
@@ -103,6 +104,9 @@ endif
 ifeq ($(SRC),)
 STEP = NullStep
 endif
+ifeq ($(INIT),init)
+STEP = InitStep
+endif
 
 #-------------------  Rules for Handling compilation --------------------------#
 
@@ -110,15 +114,16 @@ endif
 all: $(STEP)
 
 # Compile the program.
+
 $(TARGET): $(OBJS)
 	$(CC) $(CPPFLAGS) -o $@ $^
 
 # Create symbolic links to source files.
 $(SRC): % :
 	rm -f $(LDIR)/$@-dir
-	ln -s "../../$(shell find $(SEDIR) -maxdepth 1 -name '$*.cpp' -print | \
-	sed 's,.*\./\(.*\)/$*.*,\1,g' | \
-	sed 's, ,$(sp),g')" '$(LDIR)/$@-dir'
+	ln -s $(shell find $(SEDIR) -maxdepth 1 -name '$*.cpp' -print | \
+	sed 's,\(.*/\)$*\.cpp,\1,g' | sed 's, ,$(sp),g' | \
+	sed '\,\./, s,\./,../../,') '$(LDIR)/$@-dir'
 
 # Compile object files from the source files. Also retrieves dependency info.
 $(OBJS): $(ODIR)/%.o: %.cpp 
@@ -150,6 +155,9 @@ ThirdStep: Tag3
 
 # No source files found.
 NullStep: TagNull
+
+# No source folder found.
+InitStep: TagInit
 
 #-------------------- Progress Information-------------------------------------#
 
@@ -187,6 +195,9 @@ TagNull:
 	If you are not starting a new project, \
 	did you place your source files in $(SDIR) \
 	or put their path in the variable EXTDIRS?
+	
+TagInit:
+	@echo No source folder found. Initializing folder hierarchy.
 
 #-----------------Rules which do not make files--------------------------------#
 
