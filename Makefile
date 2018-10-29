@@ -38,7 +38,7 @@ LDIR = $(ODIR)/.lnk
 DDIR = $(ODIR)/.dep
 SDIR = ./src
 
-s :=\ 
+sp :=\ 
 
 # Use EXTDIRS to locate external directories with required source files.
 # Make sure that the name of every file pulled into the project is unique. 
