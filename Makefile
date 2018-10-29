@@ -3,7 +3,7 @@
 # Features: Handles a multi-directory structure for projects and automatic
 # component-specific compilation for dependencies. It also uses an iterated 
 # style of recursive make to build components in order. In addition, if
-# needed source files are outside of the project directory, there are be options
+# needed source files are outside of the project directory, there are options
 # to draw them in also.
 # 
 # Type make to compile, make clean to remove executable and object files,
