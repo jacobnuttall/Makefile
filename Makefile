@@ -38,11 +38,9 @@ LDIR = $(ODIR)/.lnk
 DDIR = $(ODIR)/.dep
 SDIR = ./src
 
-sp :=\ 
-
 # Use EXTDIRS to locate external directories with required source files.
 # Make sure that the name of every file pulled into the project is unique. 
-# If the source file has spaces in the path, replace them with $(sp) or type '\ '.
+# If the source file has spaces in the path, replace them with '\ '.
 # Note that subdirectories of paths in EXTDIRS are not searched for.
 
 EXTDIRS = # ex. ./myproject/code/ ./other\ /project/code
