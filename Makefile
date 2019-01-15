@@ -51,7 +51,7 @@ EXTDIRS = # ex. ./myproject/code/ ./other\ /project/code
 
 # Flags for the compiler.
 CC = g++
-CPPFLAGS = -g -Wall -std=c++11
+CPPFLAGS = -g -Wall -Werror -std=c++17
 DEPFLAGS = -MT $@ -MM -MP -MF # when using $(DEPFLAGS), put output info after.
 
 sp :=\\
