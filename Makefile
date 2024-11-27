@@ -45,14 +45,15 @@ SDIR = ./src
 
 EXTDIRS = # ex. ./myproject/code/ ./other\ /project/code
 
-####################     DON'T CHANGE BELOW HERE     ###########################
-
-#-------------------  Variable Defintions -------------------------------------#
-
 # Flags for the compiler.
 CC = g++
 CPPFLAGS = -g -Wall -Werror -std=c++17
 DEPFLAGS = -MT $@ -MM -MP -MF # when using $(DEPFLAGS), put output info after.
+
+####################     DON'T CHANGE BELOW HERE     ###########################
+
+#-------------------  Variable Defintions -------------------------------------#
+
 
 sp :=\\
 
